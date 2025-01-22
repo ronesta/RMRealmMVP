@@ -20,6 +20,23 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window  = UIWindow(windowScene: windowScene)
 
         let viewController = CharacterViewController()
+        let networkManager = NetworkManager()
+        let storageManager = StorageManager()
+
+        let presenter = CharacterPresenter(
+            view: viewController,
+            networkManager: networkManager,
+            storageManager: storageManager
+        )
+
+        let tableViewDataSource = CharacterTableViewDataSource(
+            presenter: presenter,
+            storageManager: storageManager
+        )
+
+        viewController.presenter = presenter
+        viewController.tableViewDataSource = tableViewDataSource
+
         let navigationControllet = UINavigationController(rootViewController: viewController)
 
         window.rootViewController = navigationControllet

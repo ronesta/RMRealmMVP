@@ -15,13 +15,14 @@ final class CharacterViewController: UIViewController {
         return tableView
     }()
 
-    var characters = [RealmCharacter]()
+    var presenter: CharacterPresenterProtocol?
+    var tableViewDataSource: CharacterDataSourceProtocol?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupViews()
-        getCharacters()
+        presenter?.viewDidLoad()
     }
 
     private func setupNavigationBar() {
@@ -34,8 +35,8 @@ final class CharacterViewController: UIViewController {
         view.backgroundColor = .white
         view.addSubview(tableView)
 
+        tableView.dataSource = tableViewDataSource
         tableView.delegate = self
-        tableView.dataSource = self
         tableView.register(CharacterTableViewCell.self,
                            forCellReuseIdentifier: CharacterTableViewCell.id)
 
@@ -43,88 +44,27 @@ final class CharacterViewController: UIViewController {
             make.edges.equalToSuperview()
         }
     }
+}
 
-    private func getCharacters() {
-        self.characters = StorageManager.shared.fetchCharacters()
+// MARK: - CharacterViewProtocol
+extension CharacterViewController: CharacterViewProtocol {
+    func reloadTableView() {
+        tableView.reloadData()
+    }
 
-        guard self.characters.isEmpty else {
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-            return
-        }
+    func updateCharacters(_ characters: [RealmCharacter]) {
+        tableViewDataSource?.characters = characters
+        tableView.reloadData()
+    }
 
-        NetworkManager.shared.getCharacters { [weak self] result, error in
-            if let error {
-                print("Error getting characters: \(error)")
-                return
-            }
-
-            guard let result else {
-                print("No result returned.")
-                return
-            }
-
-            var charactersToSave: [(character: Character, imageData: Data)] = []
-
-            let group = DispatchGroup()
-
-            result.forEach { res in
-                group.enter()
-                NetworkManager.shared.fetchImage(from: res.image) { data, error in
-                    if let error {
-                        print("Failed to load image: \(error)")
-                        return
-                    }
-
-                    guard let data else {
-                        print("No data for image")
-                        return
-                    }
-
-                    charactersToSave.append((character: res, imageData: data))
-
-                    group.leave()
-                }
-            }
-
-            group.notify(queue: .main) { [weak self] in
-                StorageManager.shared.saveCharacters(charactersToSave)
-
-                DispatchQueue.main.async {
-                    self?.characters = StorageManager.shared.fetchCharacters()
-                    self?.tableView.reloadData()
-                }
-            }
-        }
+    func showError(_ message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 }
 
-extension CharacterViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return characters.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(
-            withIdentifier: CharacterTableViewCell.id,
-            for: indexPath) as? CharacterTableViewCell else {
-            return UITableViewCell()
-        }
-
-        let character = characters[indexPath.row]
-
-        guard let imageData = StorageManager.shared.fetchImageData(forCharacterId: character.id),
-              let image = UIImage(data: imageData) else {
-            return cell
-        }
-
-        cell.configure(with: character, image: image)
-
-        return cell
-    }
-}
-
+// MARK: - UITableViewDelegate
 extension CharacterViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         128
@@ -134,4 +74,3 @@ extension CharacterViewController: UITableViewDelegate {
         tableView.deselectRow(at: indexPath, animated: true)
     }
 }
-

@@ -7,12 +7,11 @@
 
 import Foundation
 
-final class NetworkManager {
-    static let shared = NetworkManager()
-    private init() {}
-    var counter = 1
+final class NetworkManager: NetworkManagerProtocol {
+    var dataCounter = 1
+    var imageCounter = 1
 
-    let urlString = "https://rickandmortyapi.com/api/character"
+    private let urlString = "https://rickandmortyapi.com/api/character"
 
     func getCharacters(completion: @escaping ([Character]?, Error?) -> Void) {
         guard let url = URL(string: urlString) else {
@@ -42,8 +41,8 @@ final class NetworkManager {
                 let characters = try JSONDecoder().decode(PostCharacters.self, from: data)
                 DispatchQueue.main.async {
                     completion(characters.results, nil)
-                    print("Load data \(self.counter)")
-                    self.counter += 1
+                    print("Load data \(self.dataCounter)")
+                    self.dataCounter += 1
                 }
             } catch {
                 print("Decoding error: \(error.localizedDescription)")
@@ -54,7 +53,7 @@ final class NetworkManager {
         }.resume()
     }
 
-    func fetchImage(from urlString: String, completion: @escaping (Data?, Error?) -> Void) {
+    func loadImage(from urlString: String, completion: @escaping (Data?, Error?) -> Void) {
         guard let url = URL(string: urlString) else {
             print("Invalid URL for image")
             completion(nil, NetworkError.invalidURL)
@@ -79,6 +78,8 @@ final class NetworkManager {
             }
             DispatchQueue.main.async {
                 completion(data, nil)
+                print("Load image \(self.imageCounter)")
+                self.imageCounter += 1
             }
         }.resume()
     }
