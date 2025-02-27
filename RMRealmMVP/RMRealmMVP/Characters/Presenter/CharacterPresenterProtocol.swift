@@ -9,10 +9,7 @@ import Foundation
 import UIKit
 
 protocol CharacterPresenterProtocol: AnyObject {
-    init(view: CharacterViewProtocol,
-         networkManager: NetworkManagerProtocol,
-         storageManager: StorageManagerProtocol
-    )
-
     func viewDidLoad()
+
+    func fetchImageData(for characterId: Int) -> Data?
 }

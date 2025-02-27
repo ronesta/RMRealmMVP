@@ -89,5 +89,8 @@ final class CharacterPresenter: CharacterPresenterProtocol {
             }
         }
     }
-}
 
+    func fetchImageData(for characterId: Int) -> Data? {
+        storageManager.fetchImageData(forCharacterId: characterId)
+    }
+}

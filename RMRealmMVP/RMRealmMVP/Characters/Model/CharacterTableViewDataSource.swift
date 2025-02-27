@@ -10,14 +10,10 @@ import UIKit
 
 final class CharacterTableViewDataSource: NSObject, CharacterDataSourceProtocol {
     var characters = [RealmCharacter]()
-    var presenter: CharacterPresenterProtocol
-    var storageManager: StorageManagerProtocol
+    private let presenter: CharacterPresenterProtocol
 
-    init(presenter: CharacterPresenterProtocol,
-         storageManager: StorageManagerProtocol
-    ) {
+    init(presenter: CharacterPresenterProtocol) {
         self.presenter = presenter
-        self.storageManager = storageManager
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -34,7 +30,7 @@ final class CharacterTableViewDataSource: NSObject, CharacterDataSourceProtocol 
 
         let character = characters[indexPath.row]
 
-        guard let imageData = storageManager.fetchImageData(forCharacterId: character.id),
+        guard let imageData = presenter.fetchImageData(for: character.id),
               let image = UIImage(data: imageData) else {
             return cell
         }
